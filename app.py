@@ -298,12 +298,12 @@ def main():
         if output_format in ["Bar Charts", "All Formats"]:
             st.header("📈 Sector Performance Rankings")
             fig_bar = chart_generator.create_sector_performance_chart(sector_rankings, 'bar')
-            st.plotly_chart(fig_bar, use_container_width=True)
+            st.plotly_chart(fig_bar, width='stretch')
         
         if output_format in ["Line Charts", "All Formats"]:
             st.header("📉 Sector Momentum Over Time")
             fig_momentum = chart_generator.create_sector_momentum_chart(sector_data, selected_sectors)
-            st.plotly_chart(fig_momentum, use_container_width=True)
+            st.plotly_chart(fig_momentum, width='stretch')
         
         if output_format in ["Data Tables", "All Formats"]:
             st.header("📋 Sector Rankings Table")
@@ -335,14 +335,14 @@ def main():
             with col1:
                 st.subheader("Risk vs Return Analysis")
                 fig_scatter = chart_generator.create_volatility_vs_return_scatter(sector_rankings)
-                st.plotly_chart(fig_scatter, use_container_width=True)
+                st.plotly_chart(fig_scatter, width='stretch')
             
             with col2:
                 if st.session_state.model_trained:
                     st.subheader("Trend Predictions")
                     predictions = st.session_state.predictions
                     fig_pie = chart_generator.create_trend_prediction_chart(predictions)
-                    st.plotly_chart(fig_pie, use_container_width=True)
+                    st.plotly_chart(fig_pie, width='stretch')
             
             # Feature importance
             if st.session_state.model_trained:
@@ -350,9 +350,71 @@ def main():
                 try:
                     importance_df = st.session_state.classifier.get_feature_importance()
                     fig_importance = chart_generator.create_feature_importance_chart(importance_df)
-                    st.plotly_chart(fig_importance, use_container_width=True)
+                    st.plotly_chart(fig_importance, width='stretch')
                 except Exception as e:
                     st.info("Feature importance not available for this model type.")
+
+        # ML Model Performance Analysis
+        if st.session_state.model_trained:
+            st.header("🤖 Machine Learning Model Analysis")
+
+            # Create tabs for different ML visualizations
+            ml_tab1, ml_tab2, ml_tab3, ml_tab4 = st.tabs([
+                "📊 Performance Overview",
+                "📈 Training Analysis",
+                "🎯 Detailed Metrics",
+                "🔍 Model Insights"
+            ])
+
+            with ml_tab1:
+                # Performance comparison
+                perf_fig = chart_generator.create_train_test_comparison_chart(
+                    st.session_state.metrics
+                )
+                st.plotly_chart(perf_fig, width='stretch')
+
+                # CV analysis
+                cv_fig = chart_generator.create_cv_scores_visualization(
+                    st.session_state.metrics['cv_scores']
+                )
+                st.plotly_chart(cv_fig, width='stretch')
+
+            with ml_tab2:
+                # Learning curves (if available)
+                if st.session_state.metrics.get('learning_curves'):
+                    lc_data = st.session_state.metrics['learning_curves']
+                    lc_fig = chart_generator.create_learning_curves(
+                        lc_data['train_sizes'],
+                        lc_data['train_scores'],
+                        lc_data['val_scores']
+                    )
+                    st.plotly_chart(lc_fig, width='stretch')
+                else:
+                    st.info("Learning curves not available - enable in model training for detailed analysis")
+
+            with ml_tab3:
+                # Confusion matrix
+                cm_fig = chart_generator.create_confusion_matrix_heatmap(
+                    st.session_state.metrics['y_test'],
+                    st.session_state.metrics['y_pred'],
+                    st.session_state.metrics['class_names']
+                )
+                st.plotly_chart(cm_fig, width='stretch')
+
+                # Classification report
+                cr_fig = chart_generator.create_classification_report_chart(
+                    st.session_state.metrics['y_test'],
+                    st.session_state.metrics['y_pred'],
+                    st.session_state.metrics['class_names']
+                )
+                st.plotly_chart(cr_fig, width='stretch')
+
+            with ml_tab4:
+                # Performance dashboard
+                dashboard_fig = chart_generator.create_ml_performance_dashboard(
+                    st.session_state.metrics
+                )
+                st.plotly_chart(dashboard_fig, width='stretch')
 
 if __name__ == "__main__":
     main()

@@ -309,6 +309,250 @@ class ChartGenerator:
         
         st.dataframe(
             display_df,
-            use_container_width=True,
+            width='stretch',
             hide_index=True
         )
+
+
+    def create_train_test_comparison_chart(self, metrics):
+        """Compare training and testing performance"""
+        fig = go.Figure()
+
+        categories = ['Training Accuracy', 'Test Accuracy', 'CV Mean Accuracy']
+        values = [
+            metrics['train_accuracy'],
+            metrics['test_accuracy'],
+            metrics['cv_mean_accuracy']
+        ]
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+
+        fig.add_trace(go.Bar(
+            x=categories,
+            y=values,
+            marker_color=colors,
+            text=[f'{v:.2%}' for v in values],
+            textposition='auto'
+        ))
+
+        fig.update_layout(
+            title='Model Performance Comparison',
+            yaxis_title='Accuracy Score',
+            height=400,
+            showlegend=False
+        )
+
+        return fig
+
+
+    def create_cv_scores_visualization(self, cv_scores):
+        """Show cross-validation score distribution"""
+        fig = make_subplots(
+            rows=1, cols=2,
+            subplot_titles=['CV Scores Distribution', 'CV Scores Box Plot']
+        )
+
+        # Histogram
+        fig.add_trace(
+            go.Histogram(x=cv_scores, nbinsx=10, name='CV Scores'),
+            row=1, col=1
+        )
+
+        # Box plot
+        fig.add_trace(
+            go.Box(y=cv_scores, name='CV Scores', boxpoints='all'),
+            row=1, col=2
+        )
+
+        fig.update_layout(
+            title='Cross-Validation Performance Analysis',
+            height=400
+        )
+
+        return fig
+
+
+    def create_learning_curves(self, train_sizes, train_scores, val_scores):
+        """Show how model performance improves with more data"""
+        fig = go.Figure()
+
+        # Training scores
+        fig.add_trace(go.Scatter(
+            x=train_sizes,
+            y=train_scores.mean(axis=1),
+            mode='lines+markers',
+            name='Training Score',
+            line=dict(color='blue'),
+            error_y=dict(
+                type='data',
+                array=train_scores.std(axis=1),
+                visible=True
+            )
+        ))
+
+        # Validation scores
+        fig.add_trace(go.Scatter(
+            x=train_sizes,
+            y=val_scores.mean(axis=1),
+            mode='lines+markers',
+            name='Validation Score',
+            line=dict(color='red'),
+            error_y=dict(
+                type='data',
+                array=val_scores.std(axis=1),
+                visible=True
+            )
+        ))
+
+        fig.update_layout(
+            title='Learning Curves - Performance vs Training Set Size',
+            xaxis_title='Training Set Size',
+            yaxis_title='Accuracy Score',
+            height=500
+        )
+
+        return fig
+
+
+    def create_confusion_matrix_heatmap(self, y_true, y_pred, class_names):
+        """Interactive confusion matrix"""
+        from sklearn.metrics import confusion_matrix
+
+        cm = confusion_matrix(y_true, y_pred)
+
+        # Calculate percentages
+        cm_percent = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis] * 100
+
+        fig = go.Figure(data=go.Heatmap(
+            z=cm,
+            x=class_names,
+            y=class_names,
+            colorscale='Blues',
+            text=[[f'{cm[i][j]}<br>({cm_percent[i][j]:.1f}%)'
+                   for j in range(len(class_names))]
+                  for i in range(len(class_names))],
+            texttemplate='%{text}',
+            textfont={"size": 12}
+        ))
+
+        fig.update_layout(
+            title='Confusion Matrix - Predictions vs Actual',
+            xaxis_title='Predicted',
+            yaxis_title='Actual',
+            height=500
+        )
+
+        return fig
+
+
+    def create_classification_report_chart(self, y_true, y_pred, class_names):
+        """Visual classification report"""
+        from sklearn.metrics import classification_report
+
+        report = classification_report(y_true, y_pred, target_names=class_names, output_dict=True)
+
+        # Extract metrics for each class
+        classes = class_names
+        precision = [report[cls]['precision'] for cls in classes]
+        recall = [report[cls]['recall'] for cls in classes]
+        f1_score = [report[cls]['f1-score'] for cls in classes]
+
+        fig = go.Figure()
+
+        fig.add_trace(go.Bar(
+            name='Precision',
+            x=classes,
+            y=precision,
+            marker_color='lightblue'
+        ))
+
+        fig.add_trace(go.Bar(
+            name='Recall',
+            x=classes,
+            y=recall,
+            marker_color='lightgreen'
+        ))
+
+        fig.add_trace(go.Bar(
+            name='F1-Score',
+            x=classes,
+            y=f1_score,
+            marker_color='lightcoral'
+        ))
+
+        fig.update_layout(
+            title='Classification Report - Per Class Performance',
+            xaxis_title='Classes',
+            yaxis_title='Score',
+            barmode='group',
+            height=500
+        )
+
+        return fig
+
+
+    def create_ml_performance_dashboard(self, metrics):
+        """Comprehensive ML metrics dashboard"""
+        fig = make_subplots(
+            rows=2, cols=2,
+            subplot_titles=[
+                'Accuracy Metrics',
+                'Cross-Validation Stability',
+                'Overfitting Check',
+                'Model Confidence'
+            ],
+            specs=[
+                [{"type": "bar"}, {"type": "indicator"}],
+                [{"type": "scatter"}, {"type": "bar"}]
+            ]
+        )
+
+        # Accuracy comparison
+        accuracies = ['Train', 'Test', 'CV Mean']
+        values = [
+            metrics['train_accuracy'],
+            metrics['test_accuracy'],
+            metrics['cv_mean_accuracy']
+        ]
+
+        fig.add_trace(
+            go.Bar(x=accuracies, y=values, name='Accuracy'),
+            row=1, col=1
+        )
+
+        # CV Standard deviation gauge
+        fig.add_trace(
+            go.Indicator(
+                mode="gauge+number",
+                value=metrics['cv_std_accuracy'],
+                title={'text': "CV Std Dev"},
+                gauge={
+                    'axis': {'range': [None, 0.1]},
+                    'bar': {'color': "darkblue"},
+                    'steps': [
+                        {'range': [0, 0.02], 'color': "lightgreen"},
+                        {'range': [0.02, 0.05], 'color': "yellow"},
+                        {'range': [0.05, 0.1], 'color': "red"}
+                    ]
+                }
+            ),
+            row=1, col=2
+        )
+
+        # Overfitting check (train vs test)
+        overfitting_gap = metrics['train_accuracy'] - metrics['test_accuracy']
+        fig.add_trace(
+            go.Scatter(
+                x=['Overfitting Gap'],
+                y=[overfitting_gap],
+                mode='markers',
+                marker=dict(
+                    size=20,
+                    color='red' if overfitting_gap > 0.1 else 'green'
+                ),
+                name='Gap'
+            ),
+            row=2, col=1
+        )
+
+        fig.update_layout(height=600, title_text="ML Model Performance Dashboard")
+        return fig

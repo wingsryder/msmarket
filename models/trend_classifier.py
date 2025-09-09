@@ -139,15 +139,15 @@ class SectorTrendClassifier:
         y = df['Trend_Label'].values
         
         return X, y
-    
+
     def train(self, df: pd.DataFrame, test_size: float = 0.2) -> Dict[str, float]:
         """
         Train the trend classification model.
-        
+
         Args:
             df: Training data with features and labels
             test_size: Proportion of data to use for testing
-            
+
         Returns:
             Dict[str, float]: Training metrics
         """
@@ -182,38 +182,67 @@ class SectorTrendClassifier:
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y_encoded, test_size=test_size, random_state=42
             )
-        
+
         # Scale features
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_test_scaled = self.scaler.transform(X_test)
-        
+
         # Train model
         self.model.fit(X_train_scaled, y_train)
         self.is_trained = True
-        
+
         # Evaluate model
         train_score = self.model.score(X_train_scaled, y_train)
         test_score = self.model.score(X_test_scaled, y_test)
-        
+
         # Cross-validation score with error handling
         try:
             cv_scores = cross_val_score(self.model, X_train_scaled, y_train, cv=min(5, len(X_train)//2))
         except Exception as e:
             print(f"Warning: Cross-validation failed: {e}. Using simple validation.")
             cv_scores = np.array([test_score])  # Use test score as fallback
-        
+
         # Predictions for detailed metrics
         y_pred = self.model.predict(X_test_scaled)
-        
-        metrics = {
+
+        # Enhanced metrics collection
+        from sklearn.metrics import classification_report, confusion_matrix
+        from sklearn.model_selection import learning_curve
+
+        # Get detailed predictions
+        y_pred = self.model.predict(X_test_scaled)
+        y_proba = self.model.predict_proba(X_test_scaled)
+
+        # Learning curves (optional - can be computationally expensive)
+        try:
+            train_sizes, train_scores, val_scores = learning_curve(
+                self.model, X_train_scaled, y_train, cv=3,
+                train_sizes=np.linspace(0.3, 1.0, 5)
+            )
+            learning_curves_data = {
+                'train_sizes': train_sizes,
+                'train_scores': train_scores,
+                'val_scores': val_scores
+            }
+        except:
+            learning_curves_data = None
+
+        # Enhanced metrics
+        enhanced_metrics = {
             'train_accuracy': train_score,
             'test_accuracy': test_score,
             'cv_mean_accuracy': cv_scores.mean(),
-            'cv_std_accuracy': cv_scores.std()
+            'cv_std_accuracy': cv_scores.std(),
+            'cv_scores': cv_scores,
+            'y_test': y_test,
+            'y_pred': y_pred,
+            'y_proba': y_proba,
+            'class_names': self.label_encoder.classes_,
+            'learning_curves': learning_curves_data
         }
-        
-        return metrics
-    
+
+        return enhanced_metrics
+
     def predict(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Make predictions on new data.
