@@ -143,33 +143,41 @@ class ChartGenerator:
     def create_volatility_vs_return_scatter(self, sector_rankings: pd.DataFrame) -> go.Figure:
         """
         Create scatter plot of volatility vs returns.
-        
-        Args:
-            sector_rankings: Sector data with volatility and return metrics
-            
-        Returns:
-            go.Figure: Plotly figure object
+
+        Handles NaNs/infs in axes and size/color inputs to avoid Plotly errors.
         """
+        df = sector_rankings.copy()
+        df = df.replace([np.inf, -np.inf], np.nan)
+        df = df.dropna(subset=['Avg_Volatility', 'Sector_Momentum'])
+
+        if df.empty:
+            fig = px.scatter(title='Risk vs Return Analysis')
+            fig.update_layout(height=500, title_x=0.5)
+            return fig
+
+        # Build safe numeric columns in the dataframe for size/color
+        perf = pd.to_numeric(df.get('Performance_Score', pd.Series(np.nan, index=df.index)), errors='coerce')
+        df['Bubble_Size'] = perf.fillna(0).clip(lower=0)
+        # Ensure a minimal visible size to avoid invisible points
+        df['Bubble_Size'] = df['Bubble_Size'].apply(lambda v: 5 if v == 0 else v)
+        df['Bubble_Color'] = perf.fillna(0)
+
         fig = px.scatter(
-            sector_rankings,
+            df,
             x='Avg_Volatility',
             y='Sector_Momentum',
-            size='Performance_Score',
-            color='Performance_Score',
+            size='Bubble_Size',
+            color='Bubble_Color',
             hover_name='Sector',
             title='Risk vs Return Analysis',
             labels={
                 'Avg_Volatility': 'Volatility (Risk)',
                 'Sector_Momentum': 'Average Return'
             },
-            color_continuous_scale='RdYlGn'
+            color_continuous_scale='RdYlGn',
         )
-        
-        fig.update_layout(
-            height=500,
-            title_x=0.5
-        )
-        
+
+        fig.update_layout(height=500, title_x=0.5)
         return fig
     
     def create_feature_importance_chart(self, importance_df: pd.DataFrame) -> go.Figure:

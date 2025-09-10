@@ -30,27 +30,33 @@ class FeatureEngineer:
             pd.DataFrame: Data with moving average features
         """
         result_df = df.copy()
-        
+
+        # De-duplicate columns and coerce 'Close' to a 1D Series
+        if result_df.columns.duplicated().any():
+            result_df = result_df.loc[:, ~result_df.columns.duplicated()]
+        close_obj = result_df['Close'] if 'Close' in result_df.columns else None
+        close_series = close_obj.iloc[:, 0] if isinstance(close_obj, pd.DataFrame) else close_obj
+
         for period in self.ma_periods:
             # Simple Moving Average
-            result_df[f'SMA_{period}'] = result_df.groupby('Symbol')['Close'].rolling(
+            result_df[f'SMA_{period}'] = close_series.groupby(result_df['Symbol']).rolling(
                 window=period, min_periods=1
             ).mean().reset_index(0, drop=True)
-            
+
             # Exponential Moving Average
-            result_df[f'EMA_{period}'] = result_df.groupby('Symbol')['Close'].ewm(
+            result_df[f'EMA_{period}'] = close_series.groupby(result_df['Symbol']).ewm(
                 span=period, adjust=False
             ).mean().reset_index(0, drop=True)
-            
+
             # Price relative to moving average
             result_df[f'Price_to_SMA_{period}'] = safe_divide(
-                result_df['Close'], result_df[f'SMA_{period}']
+                close_series, result_df[f'SMA_{period}']
             )
-            
+
             result_df[f'Price_to_EMA_{period}'] = safe_divide(
-                result_df['Close'], result_df[f'EMA_{period}']
+                close_series, result_df[f'EMA_{period}']
             )
-        
+
         return result_df
     
     def calculate_momentum_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -64,34 +70,40 @@ class FeatureEngineer:
             pd.DataFrame: Data with momentum features
         """
         result_df = df.copy()
-        
+
+        # De-duplicate columns and coerce 'Close' to a 1D Series
+        if result_df.columns.duplicated().any():
+            result_df = result_df.loc[:, ~result_df.columns.duplicated()]
+        close_obj = result_df['Close'] if 'Close' in result_df.columns else None
+        close_series = close_obj.iloc[:, 0] if isinstance(close_obj, pd.DataFrame) else close_obj
+
         for period in self.momentum_periods:
             # Rate of Change (ROC)
-            result_df[f'ROC_{period}'] = result_df.groupby('Symbol')['Close'].pct_change(
+            result_df[f'ROC_{period}'] = close_series.groupby(result_df['Symbol']).pct_change(
                 periods=period
             ).reset_index(0, drop=True) * 100
-            
+
             # Momentum (price difference)
-            result_df[f'Momentum_{period}'] = result_df.groupby('Symbol')['Close'].diff(
+            result_df[f'Momentum_{period}'] = close_series.groupby(result_df['Symbol']).diff(
                 periods=period
             ).reset_index(0, drop=True)
-            
+
             # Relative Strength Index (RSI) approximation
-            delta = result_df.groupby('Symbol')['Close'].diff()
+            delta = close_series.groupby(result_df['Symbol']).diff()
             gain = delta.where(delta > 0, 0)
             loss = -delta.where(delta < 0, 0)
-            
+
             avg_gain = gain.groupby(result_df['Symbol']).rolling(
                 window=period, min_periods=1
             ).mean().reset_index(0, drop=True)
-            
+
             avg_loss = loss.groupby(result_df['Symbol']).rolling(
                 window=period, min_periods=1
             ).mean().reset_index(0, drop=True)
-            
+
             rs = safe_divide(avg_gain, avg_loss, default=0)
             result_df[f'RSI_{period}'] = 100 - (100 / (1 + rs))
-        
+
         return result_df
     
     def calculate_volatility_measures(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -105,36 +117,48 @@ class FeatureEngineer:
             pd.DataFrame: Data with volatility features
         """
         result_df = df.copy()
-        
+
+        # De-duplicate columns and coerce Series inputs
+        if result_df.columns.duplicated().any():
+            result_df = result_df.loc[:, ~result_df.columns.duplicated()]
+        dr_obj = result_df['Daily_Return'] if 'Daily_Return' in result_df.columns else None
+        dr_series = dr_obj.iloc[:, 0] if isinstance(dr_obj, pd.DataFrame) else dr_obj
+        high_obj = result_df['High'] if 'High' in result_df.columns else None
+        high_series = high_obj.iloc[:, 0] if isinstance(high_obj, pd.DataFrame) else high_obj
+        low_obj = result_df['Low'] if 'Low' in result_df.columns else None
+        low_series = low_obj.iloc[:, 0] if isinstance(low_obj, pd.DataFrame) else low_obj
+        close_obj = result_df['Close'] if 'Close' in result_df.columns else None
+        close_series = close_obj.iloc[:, 0] if isinstance(close_obj, pd.DataFrame) else close_obj
+
         # Historical volatility (annualized)
-        result_df['Historical_Volatility'] = result_df.groupby('Symbol')['Daily_Return'].rolling(
+        result_df['Historical_Volatility'] = dr_series.groupby(result_df['Symbol']).rolling(
             window=self.volatility_window, min_periods=1
         ).std().reset_index(0, drop=True) * np.sqrt(252) * 100
-        
+
         # Average True Range (ATR)
         result_df['True_Range'] = np.maximum(
-            result_df['High'] - result_df['Low'],
+            high_series - low_series,
             np.maximum(
-                abs(result_df['High'] - result_df['Close'].shift(1)),
-                abs(result_df['Low'] - result_df['Close'].shift(1))
+                abs(high_series - close_series.shift(1)),
+                abs(low_series - close_series.shift(1))
             )
         )
-        
-        result_df['ATR'] = result_df.groupby('Symbol')['True_Range'].rolling(
+
+        result_df['ATR'] = result_df['True_Range'].groupby(result_df['Symbol']).rolling(
             window=14, min_periods=1
         ).mean().reset_index(0, drop=True)
-        
+
         # Volatility ratio (current vs historical)
-        short_vol = result_df.groupby('Symbol')['Daily_Return'].rolling(
+        short_vol = dr_series.groupby(result_df['Symbol']).rolling(
             window=5, min_periods=1
         ).std().reset_index(0, drop=True)
-        
-        long_vol = result_df.groupby('Symbol')['Daily_Return'].rolling(
+
+        long_vol = dr_series.groupby(result_df['Symbol']).rolling(
             window=20, min_periods=1
         ).std().reset_index(0, drop=True)
-        
+
         result_df['Volatility_Ratio'] = safe_divide(short_vol, long_vol)
-        
+
         return result_df
     
     def calculate_trend_signals(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -148,34 +172,40 @@ class FeatureEngineer:
             pd.DataFrame: Data with trend signals
         """
         result_df = df.copy()
-        
+
+        # De-duplicate columns and coerce 'Close' to Series
+        if result_df.columns.duplicated().any():
+            result_df = result_df.loc[:, ~result_df.columns.duplicated()]
+        close_obj = result_df['Close'] if 'Close' in result_df.columns else None
+        close_series = close_obj.iloc[:, 0] if isinstance(close_obj, pd.DataFrame) else close_obj
+
         # MACD (Moving Average Convergence Divergence)
-        ema_12 = result_df.groupby('Symbol')['Close'].ewm(span=12).mean().reset_index(0, drop=True)
-        ema_26 = result_df.groupby('Symbol')['Close'].ewm(span=26).mean().reset_index(0, drop=True)
-        
+        ema_12 = close_series.groupby(result_df['Symbol']).ewm(span=12, adjust=False).mean().reset_index(0, drop=True)
+        ema_26 = close_series.groupby(result_df['Symbol']).ewm(span=26, adjust=False).mean().reset_index(0, drop=True)
+
         result_df['MACD'] = ema_12 - ema_26
-        result_df['MACD_Signal'] = result_df.groupby('Symbol')['MACD'].ewm(span=9).mean().reset_index(0, drop=True)
+        result_df['MACD_Signal'] = result_df['MACD'].groupby(result_df['Symbol']).ewm(span=9, adjust=False).mean().reset_index(0, drop=True)
         result_df['MACD_Histogram'] = result_df['MACD'] - result_df['MACD_Signal']
-        
+
         # Bollinger Band signals
         if 'BB_Upper' in result_df.columns and 'BB_Lower' in result_df.columns:
             result_df['BB_Signal'] = np.where(
-                result_df['Close'] > result_df['BB_Upper'], 1,  # Overbought
-                np.where(result_df['Close'] < result_df['BB_Lower'], -1, 0)  # Oversold
+                close_series > result_df['BB_Upper'], 1,  # Overbought
+                np.where(close_series < result_df['BB_Lower'], -1, 0)  # Oversold
             )
-        
+
         # Moving average crossover signals
         if 'SMA_5' in result_df.columns and 'SMA_20' in result_df.columns:
             result_df['MA_Crossover'] = np.where(
                 result_df['SMA_5'] > result_df['SMA_20'], 1, -1
             )
-        
+
         # Price momentum signal
         result_df['Price_Momentum_Signal'] = np.where(
             result_df['ROC_10'] > 2, 1,  # Strong positive momentum
             np.where(result_df['ROC_10'] < -2, -1, 0)  # Strong negative momentum
         )
-        
+
         return result_df
     
     def create_sector_features(self, sector_data: pd.DataFrame) -> pd.DataFrame:
