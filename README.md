@@ -1,170 +1,252 @@
 # Multi-Stock Sector Trend Analyzer
 
-A comprehensive web application that analyzes stock market trends across different sectors to identify which sectors are currently trending bullish or bearish using machine learning and technical analysis.
+A comprehensive web application that analyzes Indian stock market trends across different sectors to identify which sectors are currently trending bullish or bearish using machine learning and technical analysis.
 
-## 🚀 Features
+## 🚀 Key Features
 
-- Real-time data from Yahoo Finance (NSE/BSE) with resilient fetching
-- India-only market focus with NSE symbols (suffix .NS)
-- Feature engineering: momentum, volatility, risk-adjusted returns, trend consistency
-- Machine learning trend classification (Bullish/Neutral/Bearish) using scikit-learn
-- ML Performance Dashboard — learning curves, confusion matrix, CV analysis, classification report, ROC, and enhanced feature importance
-- Interactive Streamlit UI with Plotly visuals
-- Customizable analysis: date range, sectors, and optional custom symbols
-- Multiple output formats: bar/line charts, tables, ranked lists, heatmaps
+### 📊 Data & Market Coverage
+- **Indian Market Focus**: NSE/BSE stocks with .NS suffix symbols
+- **100 Pre-configured Stocks**: Across 10 major sectors (Technology, Banking, Finance, Energy, FMCG, etc.)
+- **Smart Data Fetching**: Cache-first approach with offline backup and live API fallback
+- **Resilient Data Collection**: Handles Yahoo Finance rate limits with retry logic and local caching
+
+### 🤖 Machine Learning & Analytics
+- **Trend Classification**: ML-powered Bullish/Neutral/Bearish predictions using scikit-learn
+- **Advanced Feature Engineering**: 40+ technical indicators including momentum, volatility, and trend signals
+- **Comprehensive ML Dashboard**: Learning curves, confusion matrix, ROC analysis, feature importance with error bars
+- **Risk-Adjusted Analysis**: Sector performance normalized by volatility and risk metrics
+
+### 🎨 Interactive Visualizations
+- **Real-time Charts**: Plotly-powered interactive visualizations
+- **Multiple Chart Types**: Bar charts, line plots, scatter plots, heatmaps, pie charts
+- **Risk vs Return Analysis**: Bubble charts showing volatility vs performance
+- **Sector Momentum Tracking**: Time series analysis of sector trends
+
+### 💾 Offline Capabilities
+- **Local Cache System**: Gzipped CSV storage for 1-year historical data
+- **Preload Functionality**: Download all NSE data for offline analysis
+- **Cache-First Strategy**: Prioritizes local data over API calls for faster performance
+- **Fallback Logic**: Seamless switching between cache and live data
 
 ## 📋 Requirements
 
-- Python 3.8 or higher
-- Internet connection for fetching stock data
-- Streamlit 1.50+ 
+- **Python**: 3.8 or higher
+- **Internet**: For initial data download (optional for cached analysis)
+- **Storage**: ~50MB for full NSE cache
+- **Dependencies**: Listed in requirements.txt
 
 ## 🛠️ Installation
 
-1. Clone this repository or download the files
-2. Navigate to the project directory:
+1. **Clone the repository**:
    ```bash
-   cd <root_directory>
+   git clone <repository-url>
+   cd stock
    ```
-3. Install dependencies:
+
+2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-## 🎯 Usage
+3. **Run the application**:
+   ```bash
+   streamlit run app.py
+   ```
 
-### Running the Application
+4. **Access the app**: Open `http://localhost:8501` in your browser
 
-Start the Streamlit application:
-```bash
-streamlit run app.py
-```
+## 🎯 Quick Start Guide
 
-The application will open in your default web browser at `http://localhost:8501`
+### First Time Setup
+1. **Preload Data** (Recommended): Click "Preload NSE cache (1 year)" in the sidebar
+2. **Select Sectors**: Choose from Technology, Banking, Finance, Energy, FMCG
+3. **Set Date Range**: Pick your analysis period (1 week to 1 year)
+4. **Run Analysis**: Click "Run Analysis" to start
 
-### Using the Interface
+### Understanding Results
+- **Sector Rankings**: Performance scores with color-coded visualization
+- **Trend Predictions**: ML-powered bullish/bearish forecasts
+- **Risk Analysis**: Volatility vs return scatter plots
+- **ML Insights**: Model performance and feature importance
 
-1. **Set Date Range**: Choose start and end dates for analysis
-2. **Select Sectors**: Choose which sectors to analyze from the dropdown
-3. **Custom Stocks** (Optional): Add custom stock symbols for specific sectors
-4. **Analysis Parameters**: Set rolling window size for calculations
-5. **Output Format**: Choose visualization type
-6. **Run Analysis**: Click the "Run Analysis" button to start
-7. After a successful run with sufficient data, open the "Machine Learning Model Analysis" tabs to explore ML performance (learning curves, confusion matrix, CV analysis, classification report, ROC, feature importance).
-
-
-## 📁 Project Structure
+## 📁 Project Architecture
 
 ```
 stock/
 ├── app.py                    # Main Streamlit application
 ├── data/
-│   ├── __init__.py
-│   ├── api_providers.py      # API providers for Indian stock market data
-│   ├── collector.py          # Data collection from Yahoo Finance
-│   └── processor.py          # Data processing and aggregation
+│   ├── collector.py          # Smart data collection with caching
+│   ├── processor.py          # Data processing and aggregation
+│   └── yf_cache/            # Local cache directory (auto-created)
 ├── models/
-│   ├── __init__.py
-│   ├── trend_classifier.py   # ML model for trend classification
-│   └── features.py           # Feature engineering functions
+│   ├── trend_classifier.py   # ML trend classification
+│   └── features.py           # Technical indicator calculations
 ├── utils/
-│   ├── __init__.py
-│   ├── config.py             # Configuration and constants
-│   └── helpers.py            # Utility functions
+│   ├── config.py             # Market configuration and stock symbols
+│   └── helpers.py            # Utility functions and validation
+│   └── yf_cache_test.py     # Standalone cache testing utility
 ├── visualizations/
-│   ├── __init__.py
-│   └── charts.py             # Visualization components
-├── requirements.txt          # fProject dependencies
-└── README.md                 # This file
+│   └── charts.py             # Interactive chart components
+├── requirements.txt          # Project dependencies
+└── README.md                 # This documentation
 ```
+
+## 🏢 Supported Sectors & Stocks
+
+### Technology (10 stocks)
+TCS.NS, INFY.NS, HCLTECH.NS, WIPRO.NS, TECHM.NS, MPHASIS.NS, COFORGE.NS, PERSISTENT.NS, LTTS.NS, OFSS.NS
+
+### Banking (10 stocks)
+HDFCBANK.NS, ICICIBANK.NS, SBIN.NS, KOTAKBANK.NS, AXISBANK.NS, INDUSINDBK.NS, FEDERALBNK.NS, BANDHANBNK.NS, IDFCFIRSTB.NS, PNB.NS
+
+### Finance (10 stocks)
+BAJFINANCE.NS, BAJAJFINSV.NS, HDFCLIFE.NS, SBILIFE.NS, ICICIPRULI.NS, LICI.NS, HDFCAMC.NS, MUTHOOTFIN.NS, CHOLAFIN.NS, PFC.NS
+
+### Energy (10 stocks)
+RELIANCE.NS, ONGC.NS, COALINDIA.NS, NTPC.NS, POWERGRID.NS, IOC.NS, BPCL.NS, GAIL.NS, TATAPOWER.NS, ADANIGREEN.NS
+
+### FMCG (10 stocks)
+HINDUNILVR.NS, NESTLEIND.NS, ITC.NS, DABUR.NS, MARICO.NS, GODREJCP.NS, BRITANNIA.NS, COLPAL.NS, TATACONSUM.NS, UBL.NS
+
+*Complete sector definitions in `utils/config.py`*
+
+## 🧠 Technical Indicators & Features
+
+### Price-Based Indicators
+- **Moving Averages**: SMA/EMA (5, 10, 20, 50 periods)
+- **Price Momentum**: ROC, momentum, percentage changes
+- **Trend Signals**: MACD, signal line crossovers
+
+### Volatility & Risk Measures
+- **Historical Volatility**: Rolling standard deviation
+- **Bollinger Bands**: Upper/lower bands with signals
+- **Average True Range (ATR)**: Volatility measurement
+
+### Volume & Market Indicators
+- **Volume Momentum**: Trading volume changes
+- **VWAP**: Volume-weighted average price
+- **Volume-Price Trend**: Combined volume-price analysis
+
+### Sector-Level Aggregations
+- **Sector Momentum**: Weighted average returns
+- **Risk-Adjusted Returns**: Sharpe-like ratios
+- **Trend Consistency**: Stability measurements
+- **Performance Rankings**: Multi-factor scoring
+
+## 📊 Visualization Gallery
+
+### Core Analytics
+- **Sector Performance Rankings**: Horizontal/vertical bar charts with color coding
+- **Sector Momentum Over Time**: Multi-line time series with interactive legends
+- **Risk vs Return Analysis**: Bubble scatter plots with performance-based sizing
+
+### ML Model Insights
+- **Confusion Matrix**: Interactive heatmap with percentage annotations
+- **ROC Curves**: Multi-class one-vs-rest with AUC scores
+- **Learning Curves**: Training vs validation performance over dataset size
+- **Feature Importance**: Bar charts with error bars (Random Forest)
+
+### Advanced Views
+- **Sector Heatmaps**: Performance over time with color gradients
+- **Trend Distribution**: Pie charts of bullish/neutral/bearish predictions
+- **Prediction Confidence**: Model certainty by sector
+
+## 💾 Cache Management
+
+### Cache Structure
+```
+data/yf_cache/
+├── TCS.NS.csv.gz           # Individual stock files
+├── INFY.NS.csv.gz
+├── HDFCBANK.NS.csv.gz
+└── ...                     # One file per symbol
+```
+
+### Cache Features
+- **Automatic TTL**: Data freshness validation
+- **Compression**: Gzipped CSV for space efficiency
+- **Date Range Filtering**: Smart slicing for requested periods
+- **Fallback Logic**: Cache → API → Partial cache hierarchy
+
+### Cache Commands
+- **Preload**: Download 1-year data for all 100 stocks
+- **Auto-refresh**: Fetch missing data on-demand
+- **Manual cleanup**: Remove cache files if needed
+
+## ⚙️ Configuration & Customization
+
+### Analysis Parameters
+- **Rolling Window**: 3-30 days (default: 7)
+- **Date Range**: Up to 1 year of historical data
+- **Trend Thresholds**: ±2% for bullish/bearish classification
+- **ML Model**: Random Forest with 100 estimators
+
+### Adding Custom Stocks
+Edit `utils/config.py` to add new sectors or stocks:
+```python
+MARKETS = {
+    'INDIA': {
+        'sectors': {
+            'YourSector': ['SYMBOL1.NS', 'SYMBOL2.NS', ...]
+        }
+    }
+}
+```
+
+### Performance Tuning
+- **Batch Size**: Adjust concurrent API requests
+- **Cache TTL**: Modify data freshness requirements
+- **ML Parameters**: Tune model hyperparameters
+- **Visualization**: Customize chart themes and colors
 
 ## 🔧 Technology Stack
 
-- **Frontend**: Streamlit
-- **Data Processing**: Pandas, NumPy
-- **Machine Learning**: scikit-learn
-- **Finance Data**: yfinance (Yahoo Finance API; NSE/BSE .NS suffix)
-- **Visualization**: Plotly, Matplotlib
+- **Backend**: Python 3.8+, Pandas, NumPy
+- **ML/Analytics**: scikit-learn, technical indicators
+- **Frontend**: Streamlit 1.50+
+- **Visualization**: Plotly, interactive charts
+- **Data Source**: Yahoo Finance (yfinance)
+- **Storage**: Local filesystem cache (CSV.gz)
 
-## 📊 Available Sectors
+## 🚀 Performance Features
 
-The application includes pre-configured stock symbols for the following sectors:
+- **Cache-First Architecture**: Minimizes API calls
+- **Batch Processing**: Efficient multi-stock downloads
+- **Lazy Loading**: Load data only when needed
+- **Session State**: Preserve analysis results
+- **Error Recovery**: Graceful handling of API failures
 
-- Technology: TCS.NS, INFY.NS, HCLTECH.NS, WIPRO.NS, TECHM.NS, MPHASIS.NS, COFORGE.NS, PERSISTENT.NS, LTTS.NS, OFSS.NS
-- Banking: HDFCBANK.NS, ICICIBANK.NS, SBIN.NS, KOTAKBANK.NS, AXISBANK.NS, INDUSINDBK.NS, FEDERALBNK.NS, BANDHANBNK.NS, IDFCFIRSTB.NS, PNB.NS
-- Finance: BAJFINANCE.NS, BAJAJFINSV.NS, HDFCLIFE.NS, SBILIFE.NS, ICICIPRULI.NS, LICI.NS, HDFCAMC.NS, MUTHOOTFIN.NS, CHOLAFIN.NS, PFC.NS
-- Energy: RELIANCE.NS, ONGC.NS, COALINDIA.NS, NTPC.NS, POWERGRID.NS, IOC.NS, BPCL.NS, GAIL.NS, TATAPOWER.NS, ADANIGREEN.NS
-- FMCG: HINDUNILVR.NS, NESTLEIND.NS, ITC.NS, DABUR.NS, MARICO.NS, GODREJCP.NS, BRITANNIA.NS, COLPAL.NS, TATACONSUM.NS, UBL.NS
+## 📈 Use Cases
 
-Full sector lists are defined in utils/config.py. Replace or extend as needed.
+### Investment Analysis
+- **Sector Rotation**: Identify trending sectors for portfolio allocation
+- **Risk Assessment**: Compare volatility across sectors
+- **Timing Analysis**: Entry/exit points based on momentum
 
-## 🧠 Machine Learning Features
+### Research & Education
+- **Market Behavior**: Study sector correlations and trends
+- **ML Learning**: Understand feature importance in financial prediction
+- **Technical Analysis**: Explore various indicators and their effectiveness
 
-The application uses the following features for trend classification:
+### Professional Trading
+- **Screening**: Quick sector-wide performance overview
+- **Risk Management**: Volatility-adjusted position sizing
+- **Trend Following**: ML-powered trend identification
 
-### Technical Indicators
-- **Moving Averages**: Simple and Exponential Moving Averages (5, 10, 20, 50 periods)
-- **Momentum Indicators**: Rate of Change (ROC), Momentum, RSI
-- **Volatility Measures**: Historical Volatility, Average True Range (ATR)
-- **Trend Signals**: MACD, Bollinger Bands, Moving Average Crossovers
+## 🛠️ Troubleshooting
 
-### Sector-Level Features
-- **Sector Momentum**: Rolling average returns
-- **Price Momentum**: Percentage change over time periods
-- **Risk-Adjusted Returns**: Returns normalized by volatility
-- **Trend Consistency**: Measure of trend stability
-- **Volume Momentum**: Changes in trading volume
+### Common Issues
+1. **No Data Fetched**: Run preload first, check internet connection
+2. **Rate Limiting**: Wait 10-15 minutes, use shorter date ranges
+3. **Cache Issues**: Clear `data/yf_cache/` directory and re-preload
+4. **ML Errors**: Ensure sufficient data points (>30 per sector)
 
-## 📈 Output Formats
+### Performance Tips
+- Use preloaded cache for faster analysis
+- Select fewer sectors for quicker processing
+- Choose shorter date ranges for real-time analysis
+- Clear browser cache if UI becomes unresponsive
 
-### 1. Bar Charts
-- Sector performance rankings
-- Prediction confidence levels
+---
 
-### 2. Line Charts
-- Sector momentum over time
-- Historical trend analysis
-
-### 3. Data Tables
-- Detailed sector rankings with metrics
-- Sortable and filterable data
-
-### 4. Ranked Lists
-- Top performing sectors
-- ML trend predictions with confidence scores
-
-### 5. Advanced Visualizations
-- Risk vs Return scatter plots
-- Trend distribution pie charts
-- Feature importance charts
-- Sector performance heatmaps
-
-## 🤖 ML Model Performance Visualizations
-
-The app now includes a dedicated ML analysis area (visible after a successful run with enough data):
-
-- Performance Overview: Train vs Test vs Cross‑Validation accuracy (mean/std)
-- Cross‑Validation Analysis: Distribution and box plot of CV scores
-- Learning Curves: Training and validation scores vs training set size
-- Confusion Matrix & Classification Report: Per‑class precision/recall/F1
-- ROC Curves (multi‑class): One‑vs‑rest ROC with AUC per class
-- Enhanced Feature Importance: Importance with variability/error bars (RF)
-
-Where to find it: In the Streamlit UI under the tabs titled “Machine Learning Model Analysis”. Some charts appear only if the model provides the required outputs (e.g., probabilities for ROC) and when there are sufficient samples (≥ 50).
-
-## ⚙️ Configuration
-
-### Customizing Sectors and Stocks
-
-You can modify the `utils/config.py` file to:
-- Add new sectors
-- Update stock symbols for existing sectors
-- Adjust analysis parameters
-- Modify ML model thresholds
-
-### Analysis Parameters
-
-- **Rolling Window**: Default 7 days (adjustable 3-30 days)
-- **Lookback Period**: Default 252 days (~1 year)
-- **Trend Thresholds**: ±2% for bullish/bearish classification
-- **Minimum Data Points**: 30 for reliable analysis
+**Built with ❤️ for Indian stock market sector analysis**

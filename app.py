@@ -4,7 +4,6 @@ Multi-Stock Sector Trend Analyzer - Main Streamlit Application
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
@@ -15,11 +14,11 @@ from data.processor import StockDataProcessor
 from models.features import FeatureEngineer
 from models.trend_classifier import SectorTrendClassifier
 from visualizations.charts import ChartGenerator
-from utils.config import MARKETS, API_PROVIDERS, DEFAULT_MARKET, DEFAULT_API, PAGE_TITLE, PAGE_ICON, LAYOUT, DEFAULT_ROLLING_WINDOW
+from utils.config import MARKETS, PAGE_TITLE, PAGE_ICON, LAYOUT, DEFAULT_ROLLING_WINDOW
 from pathlib import Path
-from scripts import yf_cache_build as yfcache
+from utils import yf_cache_build as yfcache
 
-from utils.helpers import validate_date_range, validate_date_range_with_message, display_metric_card
+from utils.helpers import validate_date_range_with_message, display_metric_card
 
 # Page configuration
 st.set_page_config(
